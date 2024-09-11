@@ -1,94 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciamento de Usuários</title>
-
-    <!-- Importando jQuery via CDN -->
-    <link rel="stylesheet" href="../style.css">
+    <title>CRUD de Usuários</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h2>Cadastro de Usuário</h2>
-    
-    <!-- Mensagem de resposta -->
-    <div id="response"></div>
+    <h1>Gerenciamento de Usuários</h1>
 
-    <!-- Formulário -->
+    <!-- Formulário de Cadastro -->
+    <h2>Cadastrar Usuário</h2>
     <form id="userForm">
-        <input type="hidden" id="id" name="id"> <!-- Campo oculto para edição -->
         <label for="nome">Nome:</label><br>
         <input type="text" id="nome" name="nome" required><br><br>
 
         <label for="idade">Idade:</label><br>
         <input type="number" id="idade" name="idade" required><br><br>
 
-        <input type="submit" value="Cadastrar">
+        <button type="submit">Cadastrar</button>
     </form>
 
-    <h2>Usuários Cadastrados</h2>
-    <div id="userList"></div>
+    <div id="resultadoCadastro"></div>
+
+    <hr>
+
+    <!-- Exibir Usuários -->
+    <h2>Lista de Usuários</h2>
+    <input type="text" id="barraPesquisa">
+    <button id="buscar">Buscar</button>
+    <br />
+    <button id="listarUsuarios">Listar Todos</button>
+    <div id="resultadoLeitura"></div>
+
+    <hr>
+
+    <!-- Formulário de Atualização -->
+    <h2>Atualizar Usuário</h2>
+    <form id="updateForm">
+        <label for="idUpdate">ID do Usuário:</label><br>
+        <input type="number" id="idUpdate" name="id" required><br><br>
+
+        <label for="nomeUpdate">Nome:</label><br>
+        <input type="text" id="nomeUpdate" name="nome" required><br><br>
+
+        <label for="idadeUpdate">Idade:</label><br>
+        <input type="number" id="idadeUpdate" name="idade" required><br><br>
+
+        <button type="submit">Atualizar</button>
+    </form>
+
+    <div id="resultadoAtualizacao"></div>
+
+    <hr>
+
+    <!-- Formulário de Exclusão -->
+    <h2>Deletar Usuário</h2>
+    <form id="deleteForm">
+        <label for="idDelete">ID do Usuário:</label><br>
+        <input type="number" id="idDelete" name="id" required><br><br>
+
+        <button type="submit">Deletar</button>
+    </form>
+
+    <div id="resultadoExclusao"></div>
 
     <script>
-        $(document).ready(function() {
-            // Função para carregar a lista de usuários
-            function loadUsers() {
-                $.ajax({
-                    url: "crud.php?action=read",
-                    type: "GET",
-                    success: function(data) {
-                        $('#userList').html(data);
-                    }
-                });
-            }
+        // Inserir usuário
+        $('#userForm').submit(function(e) {
+            e.preventDefault();
 
-            // Carrega a lista de usuários ao carregar a página
-            loadUsers();
+            var nome = $('#nome').val();
+            var idade = $('#idade').val();
 
-            // Intercepta o envio do formulário
-            $("#userForm").submit(function(e) {
-                e.preventDefault(); // Impede o comportamento padrão
-
-                // Serializa os dados do formulário
-                var formData = $(this).serialize();
-
-                // Envia os dados via AJAX
-                $.ajax({
-                    type: "POST",
-                    url: "crud.php?action=create",
-                    data: formData,
-                    success: function(response) {
-                        $("#response").html(response);
-                        $("#userForm")[0].reset(); // Limpa o formulário
-                        loadUsers(); // Atualiza a lista de usuários
-                    }
-                });
+            $.ajax({
+                url: 'insert.php',
+                type: 'POST',
+                data: { nome: nome, idade: idade },
+                success: function(response) {
+                    $('#resultadoCadastro').html(response);
+                    $('#userForm')[0].reset();
+                },
+                error: function() {
+                    $('#resultadoCadastro').html('Erro ao cadastrar usuário.');
+                }
             });
+        });
 
-            // Função para editar um usuário
-            $(document).on('click', '.editUser', function() {
-                var id = $(this).data('id');
-                var nome = $(this).data('nome');
-                var idade = $(this).data('idade');
-
-                $('#id').val(id);
-                $('#nome').val(nome);
-                $('#idade').val(idade);
-                $('input[type=submit]').val('Atualizar');
+        // Listar usuários
+        $('#listarUsuarios').click(function() {
+            $.ajax({
+                url: 'read.php',
+                type: 'GET',
+                success: function(response) {
+                    $('#resultadoLeitura').html(response);
+                },
+                error: function() {
+                    $('#resultadoLeitura').html('Erro ao listar usuários.');
+                }
             });
+        });
 
-            // Função para excluir um usuário
-            $(document).on('click', '.deleteUser', function() {
-                var id = $(this).data('id');
-                $.ajax({
-                    url: "crud.php?action=delete&id=" + id,
-                    type: "GET",
-                    success: function(response) {
-                        $("#response").html(response);
-                        loadUsers();
-                    }
-                });
+        $('#buscar').click(function() {
+            $.ajax({
+                url: 'search-user.php',
+                data: { nome: $('#barraPesquisa').val() },
+                type: 'GET',
+                success: function(response) {
+                    $('#resultadoLeitura').html(response);
+                },
+                error: function() {
+                    $('#resultadoLeitura').html('Erro ao listar usuários.');
+                }
+            });
+        })
+
+        // Atualizar usuário
+        $('#updateForm').submit(function(e) {
+            e.preventDefault();
+
+            var id = $('#idUpdate').val();
+            var nome = $('#nomeUpdate').val();
+            var idade = $('#idadeUpdate').val();
+
+            $.ajax({
+                url: 'update.php',
+                type: 'POST',
+                data: { id: id, nome: nome, idade: idade },
+                success: function(response) {
+                    $('#resultadoAtualizacao').html(response);
+                    $('#updateForm')[0].reset();
+                },
+                error: function() {
+                    $('#resultadoAtualizacao').html('Erro ao atualizar usuário.');
+                }
+            });
+        });
+
+        // Deletar usuário
+        $('#deleteForm').submit(function(e) {
+            e.preventDefault();
+
+            var id = $('#idDelete').val();
+
+            $.ajax({
+                url: 'delete.php',
+                type: 'POST',
+                data: { id: id },
+                success: function(response) {
+                    $('#resultadoExclusao').html(response);
+                    $('#deleteForm')[0].reset();
+                },
+                error: function() {
+                    $('#resultadoExclusao').html('Erro ao deletar usuário.');
+                }
             });
         });
     </script>
