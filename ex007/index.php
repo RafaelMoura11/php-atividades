@@ -1,6 +1,15 @@
 <?php 
-session_start();
 require 'db.php'; // Inclui o arquivo de conexão com o banco de dados
+
+// Adicionar tarefa
+if (isset($_GET['method']) && $_GET['method'] == "read") {
+    $search = $_GET['search'];
+    $search = "$search%";
+    $stmt = $pdo->prepare("SELECT * FROM tarefas WHERE tarefas.descricao LIKE ?");
+    $stmt->execute([$search]);
+    $tarefas = $stmt->fetchAll(); // Obtém todas as tarefas do banco de dados
+    exit();
+}
 
 // Adicionar tarefa
 if (isset($_POST['method']) && $_POST['method'] == "create") {
@@ -84,6 +93,8 @@ if (isset($_POST['method']) && $_POST['method'] == "update") {
     <h1>Suas tarefas atuais</h1>
 
     <div id="lista-tarefas">
+        <input type="text" name="search-bar" id="search-bar" placeholder="Busque uma tarefa">
+        <button id="search-bar-button">Buscar</button>
         <?php 
             // Buscar todas as tarefas do banco de dados
             $stmt = $pdo->query("SELECT * FROM tarefas");
@@ -119,6 +130,17 @@ if (isset($_POST['method']) && $_POST['method'] == "update") {
 
             var keyToUpdate = null; // Armazenar o ID da tarefa que será atualizada
 
+            function getTasks(search = "") {
+                $.ajax({
+                        url: '', // Requisição para o mesmo arquivo
+                        type: 'GET',
+                        data: { method: "read", search }, // Envia o ID da tarefa para deletar
+                });
+            }
+
+            getTasks();
+
+
             // Função para deletar tarefa
             $(document).on('click', '.delete', function() {
                 var key = $(this).data('key'); // Pega o ID da tarefa
@@ -126,7 +148,7 @@ if (isset($_POST['method']) && $_POST['method'] == "update") {
                 $.ajax({
                     url: '', // Requisição para o mesmo arquivo
                     type: 'POST',
-                    data: { method: "delete", key: key }, // Envia o ID da tarefa para deletar
+                    data: { method: "delete", key }, // Envia o ID da tarefa para deletar
                     success: function(response) {
                         location.reload(); // Recarrega a página para atualizar a lista de tarefas
                     },
@@ -186,6 +208,11 @@ if (isset($_POST['method']) && $_POST['method'] == "update") {
 
                 $('#myModal').hide(); // Esconde a modal após a atualização
             });
+
+            $('#search-bar-button').click(function() {
+                var pesquisa = $('#search-bar').val();
+                getTasks(pesquisa);
+            })
         });
     </script>
 </body>
